@@ -158,10 +158,48 @@ python -m pytest tests/direct -q        # 54 passed
 
 ## Live on chain
 
-（待补：部署后填入）
+Deployed on Bradbury at `0xA3c223197D5c691392ba4500A11aFcEC78664Aa6`.
 
----
+`open_vault` was exercised against the live contract with 1 GEN and two
+checkpoints, judged against two sources on different hosts:
+
+```
+open_vault: FINISHED_WITH_RETURN / vote=1
+vault 1: total=1000000000000000000  paid=0  status=OPEN
+sources: raw.githubusercontent.com/qlxjcj/genlayer-checkpoint-retainer/master/fixtures/delivery-log.txt
+         cdn.jsdelivr.net/gh/qlxjcj/genlayer-checkpoint-retainer@master/fixtures/delivery-log.txt
+
+release(vault 1, 0) before the due date
+  -> REFUSED: Checkpoint is not due yet
+```
+
+The delivery log served at those two URLs says:
+
+```
+Checkpoint 1: V1 shipped on 2026-01-05.
+Checkpoint 2: V2 planned for March, not shipped yet.
+```
+
+so checkpoint 1 is provable and checkpoint 2 is not — precisely the case the
+skip-forward rule exists for. Both URLs return the file with both markers, and
+they are on different hosts, which `open_vault` enforces.
+
+The settlement run (two `release` calls and one `finalize`) was interrupted by
+an outage of the Bradbury RPC endpoint and is being retried. Whether the first
+`release` landed, and what each checkpoint records, is readable on chain with
+`get_vault(1)`; both `release` and `finalize` are permissionless, so anyone can
+carry the vault to its end. The console transcript of the interrupted run is in
+the repository history rather than asserted here.
 
 ## Source integrity
 
-（待补：部署后填入）
+Repository and deployed source are byte identical:
+
+```
+sha256  8ee67fb1c248ecb7f75c52f215b4ca12d4067451069b9d986c7a2fe71a05fa5c
+bytes   15052
+```
+
+Reproduce with
+`genlayer code 0xA3c223197D5c691392ba4500A11aFcEC78664Aa6 --rpc https://rpc-bradbury.genlayer.com`
+and compare against `checkpoint_retainer.py`.
