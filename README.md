@@ -184,12 +184,39 @@ so checkpoint 1 is provable and checkpoint 2 is not — precisely the case the
 skip-forward rule exists for. Both URLs return the file with both markers, and
 they are on different hosts, which `open_vault` enforces.
 
-The settlement run (two `release` calls and one `finalize`) was interrupted by
-an outage of the Bradbury RPC endpoint and is being retried. Whether the first
-`release` landed, and what each checkpoint records, is readable on chain with
-`get_vault(1)`; both `release` and `finalize` are permissionless, so anyone can
-carry the vault to its end. The console transcript of the interrupted run is in
-the repository history rather than asserted here.
+The settlement run then finished the vault:
+
+```
+ck0  PAID     400000000000000000
+     span   "Checkpoint 1: V1 shipped on 2026-01-05."
+     reason both sources report the checkpoint complete
+
+ck1  MISSED   600000000000000000
+     reason deadline passed without proof from both sources
+
+status        CLOSED
+total         1000000000000000000
+paid_total    400000000000000000
+refunded      600000000000000000
+paid + refunded == total : true
+```
+
+`ck0` is the whole claim of this contract in one line: two independent hosts were
+fetched, consensus quoted the sentence that names the checkpoint and reports it
+done, code proved that sentence occurs in **both** bodies and carries the marker,
+and only then did 0.4 GEN move.
+
+`ck1` is worth describing honestly. Its `release` was submitted, but the Bradbury
+RPC dropped the connection during the consensus round and the transaction never
+landed (`attempts` is still 0), so **`finalize` closed it by deadline rather than
+by a judgement**. That is a fair outcome — the document says `V2 planned for
+March, not shipped yet` — but it is the deadline path, not the evidence path.
+The `NOT_YET` path itself is covered by `test_a_late_checkpoint_can_be_retried`
+and the five fail-closed tests, which do not depend on the network.
+
+What the run does show end to end is the part that matters for the money:
+**a checkpoint paid only on two-source corroboration, a checkpoint that was never
+proven paid nobody, and every unit ended up in exactly one place.**
 
 ## Source integrity
 
