@@ -1,0 +1,4 @@
+﻿Retainer delivery log
+
+Checkpoint 1: V1 shipped on 2026-01-05.
+Checkpoint 2: V2 planned for March, not shipped yet.
